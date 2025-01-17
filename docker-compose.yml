@@ -1,0 +1,37 @@
+version: '3.8'
+
+services:
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: gunicorn -b :5000 -w 4 'gavel:app'
+    ports:
+      - "5000:5000"
+    environment:
+      - IGNORE_CONFIG_FILE=false
+    volumes:
+      - .:/app
+      - ./config.yaml:/app/config.yaml
+    networks:
+      - gavel-network
+    user: "1000:1000"
+
+  worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: celery -A gavel:celery worker --loglevel=info
+    environment:
+      - IGNORE_CONFIG_FILE=false
+      - C_FORCE_ROOT=false
+    volumes:
+      - .:/app
+      - ./config.yaml:/app/config.yaml
+    networks:
+      - gavel-network
+    user: "1000:1000"
+
+networks:
+  gavel-network:
+    driver: bridge 
